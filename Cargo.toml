@@ -1,0 +1,16 @@
+[package]
+name = "rust_ocr"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "rust_ocr"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+pyo3 = "0.23.3"
+base64 = "0.21"
+image = "0.25.5"
+pdfium-render = "0.8.28"
+webp = "0.3.0"
+lopdf = "0.38.0"
