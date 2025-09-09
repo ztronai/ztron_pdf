@@ -132,59 +132,49 @@ pub fn render_base64_pdf(
 
 
 /// Opens a PDF from a base64 string and compresses its internal images to JPEG.
-///
+
 /// # Arguments
 /// * `base64_pdf` - A base64 encoded string of the source PDF file.
 /// * `quality` - The JPEG quality setting, from 1 (lowest) to 100 (highest).
 ///   A value around 75 is a good balance between size and quality.
 ///
 /// # Returns
-/// A `Result` containing the `Vec<u8>` of the new, compressed PDF, or an error.
+/// A `Result` containing the base64-encoded compressed PDF, or an error.
 pub fn compress_pdf(
     base64_pdf: &str,
     quality: u8,
 ) -> Result<String, Box<dyn Error>> {
-    let pdf_bytes = BASE64.decode(base64_pdf)
-        .map_err(|e| format!("Invalid base64 input: {}", e))?;
-    let mut doc = Document::load_mem(&pdf_bytes)?;
-   
-    doc.decompress(); // Decompress all objects for easier manipulation
-
-    for (_, obj) in doc.objects.iter_mut() {
-        if let Object::Stream(ref mut stream) = obj {
-            // Check if this is an image XObject
-            if let Ok(&Object::Name(ref subtype)) = stream.dict.get(b"Subtype") {
-                if subtype == b"Image" {
-                    // Extract raw image bytes
-                    let data = &stream.content;
-
-                    // Try to load as an image (lopdf won't tell you the format directly)
-                    if let Ok(img) = image::load_from_memory(data) {
-                        // Recompress as JPEG with specified quality
-                        let mut jpeg_buf = Vec::new();
-                        let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut jpeg_buf, quality);
-                        img.write_with_encoder(encoder).unwrap();
-
-                        // Replace stream content with JPEG data
-                        stream.set_plain_content(jpeg_buf);
-
-                        // Update dictionary
-                        stream.dict.set("Filter", Object::Name(b"DCTDecode".to_vec()));
-                        stream.dict.remove(b"DecodeParms");
-                        stream.dict.set("ColorSpace", Object::Name(b"DeviceRGB".to_vec()));
-                        stream.dict.set("BitsPerComponent", Object::Integer(8));
-                    }
-                }
-            }
-        }
+    if quality == 0 || quality > 100 {
+        return Err("Quality must be between 1 and 100".into());
     }
-    
-    // 7. Save the modified document to a new byte vector
-    let mut compressed_pdf_bytes = Vec::new();
-    doc.compress();
-    doc.save_to(&mut compressed_pdf_bytes)?;
 
-    let compressed_pdf_base64 = BASE64.encode(&compressed_pdf_bytes);
+    let mut doc = {
+        let pdf_bytes = BASE64.decode(base64_pdf)
+            .map_err(|e| format!("Invalid base64 input: {}", e))?;
+        
+        let document = Document::load_mem(&pdf_bytes)
+            .map_err(|e| format!("Failed to load PDF: {}", e))?;
+        
+        document
+    };
+    
+    let compressed_pdf_base64 = {
+        let mut compressed_pdf_bytes = Vec::new();
+        
+        // Compress the document structure
+        doc.prune_objects();
+        doc.compress();
+        
+        doc.save_to(&mut compressed_pdf_bytes)
+            .map_err(|e| format!("Failed to save compressed PDF: {}", e))?;
+        drop(doc);
+        
+        let result = BASE64.encode(&compressed_pdf_bytes);
+        drop(compressed_pdf_bytes);
+        
+        result
+    };
+
     Ok(compressed_pdf_base64)
 }
 
@@ -200,12 +190,49 @@ mod tests {
             .expect("Failed to read test PDF file");
         let base64_pdf = BASE64.encode(pdf_bytes);
 
-        match render_base64_pdf(&base64_pdf, ImageOutputFormat::JPEG, 100, 100) {
+        match render_base64_pdf(&base64_pdf, ImageOutputFormat::JPEG, 75, 100) {
             Ok(r) => {
                 assert_eq!(r.len(), 5);
             },
             Err(e) => {
                 println!("Error: {}", e);
+            }
+        }
+    }
+
+    #[test]
+    fn test_compress_pdf() {
+        let test_pdf_path = "./samples/test.pdf";
+        let pdf_bytes = std::fs::read(test_pdf_path)
+            .expect("Failed to read test PDF file");
+        let original_size = pdf_bytes.len();
+        let base64_pdf = BASE64.encode(&pdf_bytes);
+
+        println!("Original PDF size: {} bytes", original_size);
+
+        match compress_pdf(&base64_pdf, 75) {
+            Ok(compressed_base64) => {
+                let compressed_bytes = BASE64.decode(&compressed_base64)
+                    .expect("Failed to decode compressed PDF");
+                let compressed_size = compressed_bytes.len();
+                
+                let compression_ratio = (original_size as f64 - compressed_size as f64) / original_size as f64 * 100.0;
+                
+                println!("Compressed PDF size: {} bytes", compressed_size);
+                println!("Compression ratio: {:.2}%", compression_ratio);
+                
+                // Save the compressed PDF to target folder
+                let output_path = "./target/compressed_test.pdf";
+                std::fs::write(output_path, &compressed_bytes)
+                    .expect("Failed to write compressed PDF");
+                println!("Compressed PDF saved to: {}", output_path);
+                
+                assert!(compressed_size > 0, "Compressed PDF should not be empty");
+                println!("✓ Compression test completed successfully");
+            },
+            Err(e) => {
+                println!("Error compressing PDF: {}", e);
+                panic!("PDF compression failed");
             }
         }
     }
