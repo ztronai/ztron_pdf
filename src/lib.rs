@@ -68,7 +68,7 @@ pub fn compress_pdf(
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn rust_ocr(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn ztron_pdf(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(render_base64_pdf, m)?)?;
     m.add_function(wrap_pyfunction!(compress_pdf, m)?)?;
     Ok(())

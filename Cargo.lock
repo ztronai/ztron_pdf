@@ -966,17 +966,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57397d16646700483b67d2dd6511d79318f9d057fdbd21a4066aeac8b41d310a"
 
 [[package]]
-name = "rust_ocr"
-version = "0.1.0"
-dependencies = [
- "base64",
- "image",
- "pdfium-render",
- "pyo3",
- "webp",
-]
-
-[[package]]
 name = "serde"
 version = "1.0.218"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1380,6 +1369,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "ztron_pdf"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "image",
+ "pdfium-render",
+ "pyo3",
+ "webp",
 ]
 
 [[package]]
