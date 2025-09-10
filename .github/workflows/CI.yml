@@ -47,7 +47,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-multilib
-          
+      
+      - name: Set CFLAGS for aarch64
+        if: matrix.platform.target == 'aarch64'
+        run: echo "CFLAGS=-std=gnu99" >> $GITHUB_ENV
+
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
