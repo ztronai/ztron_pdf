@@ -55,7 +55,7 @@ jobs:
       
       - name: Set CFLAGS for aarch64
         if: matrix.platform.target == 'aarch64'
-        run: echo "CFLAGS=-std=gnu99" >> $GITHUB_ENV
+        run: echo "CFLAGS=-std=gnu99 -march=armv8-a+simd" >> $GITHUB_ENV
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
