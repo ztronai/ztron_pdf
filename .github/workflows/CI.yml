@@ -39,8 +39,13 @@ jobs:
       - name: Install cross compiler (for aarch64)
         if: matrix.platform.target == 'aarch64'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+            sudo apt-get update
+            sudo apt-get install -y software-properties-common
+            sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+            sudo apt-get update
+            sudo apt-get install -y gcc-12-aarch64-linux-gnu g++-12-aarch64-linux-gnu
+            sudo update-alternatives --install /usr/bin/aarch64-linux-gnu-gcc aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-12 100
+            sudo update-alternatives --install /usr/bin/aarch64-linux-gnu-g++ aarch64-linux-gnu-g++ /usr/bin/aarch64-linux-gnu-g++-12 100
 
       - name: Install cross compiler (for 32-bit x86)
         if: matrix.platform.target == 'x86'
