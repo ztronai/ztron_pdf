@@ -27,8 +27,8 @@ jobs:
             target: x86_64
           - runner: ubuntu-22.04
             target: x86
-          - runner: ubuntu-22.04
-            target: aarch64
+          # - runner: ubuntu-22.04
+          #   target: aarch64
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,16 +36,16 @@ jobs:
           python-version: 3.x
 
         # Toolchains for cross builds
-      - name: Install cross compiler (for aarch64)
-        if: matrix.platform.target == 'aarch64'
-        run: |
-            sudo apt-get update
-            sudo apt-get install -y software-properties-common
-            sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-            sudo apt-get update
-            sudo apt-get install -y gcc-12-aarch64-linux-gnu g++-12-aarch64-linux-gnu
-            sudo update-alternatives --install /usr/bin/aarch64-linux-gnu-gcc aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-12 100
-            sudo update-alternatives --install /usr/bin/aarch64-linux-gnu-g++ aarch64-linux-gnu-g++ /usr/bin/aarch64-linux-gnu-g++-12 100
+      # - name: Install cross compiler (for aarch64)
+      #   if: matrix.platform.target == 'aarch64'
+      #   run: |
+      #       sudo apt-get update
+      #       sudo apt-get install -y software-properties-common
+      #       sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+      #       sudo apt-get update
+      #       sudo apt-get install -y gcc-12-aarch64-linux-gnu g++-12-aarch64-linux-gnu
+      #       sudo update-alternatives --install /usr/bin/aarch64-linux-gnu-gcc aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-12 100
+      #       sudo update-alternatives --install /usr/bin/aarch64-linux-gnu-g++ aarch64-linux-gnu-g++ /usr/bin/aarch64-linux-gnu-g++-12 100
 
       - name: Install cross compiler (for 32-bit x86)
         if: matrix.platform.target == 'x86'
@@ -53,9 +53,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc-multilib
       
-      - name: Set CFLAGS for aarch64
-        if: matrix.platform.target == 'aarch64'
-        run: echo "CFLAGS=-std=gnu99 -march=armv8-a+simd" >> $GITHUB_ENV
+      # - name: Set CFLAGS for aarch64
+      #   if: matrix.platform.target == 'aarch64'
+      #   run: echo "CFLAGS=-std=gnu99 -march=armv8-a+simd" >> $GITHUB_ENV
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
