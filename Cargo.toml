@@ -8,7 +8,7 @@ name = "rust_ocr"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-pyo3 = "0.23.3"
+pyo3 = "0.26.0"
 base64 = "0.21"
 image = "0.25.5"
 pdfium-render = "0.8.28"
